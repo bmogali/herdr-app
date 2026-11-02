@@ -168,10 +168,15 @@ pub(crate) fn layout_names() -> Vec<String> {
         .flatten()
         .flatten()
         .filter_map(|e| e.file_name().to_str()?.strip_suffix(".json").map(str::to_owned))
-        .filter(|n| missing_mods(n).is_empty())
+        .filter(|n| layout_allowed(n) && missing_mods(n).is_empty())
         .collect();
     names.sort_by_key(|n| (n != "main", n.clone()));
     names
+}
+
+/// Managed policy (policy.rs) permits the layout `name`.
+fn layout_allowed(name: &str) -> bool {
+    crate::policy::current().layout_allowed(name, shipped_layouts().contains(&name))
 }
 
 fn state_path(name: &str) -> PathBuf {
@@ -224,7 +229,9 @@ fn missing_mods(name: &str) -> Vec<String> {
     walk(&layout, &mut used);
     used.sort();
     used.dedup();
-    used.retain(|m| !m.starts_with("frame-") && !mods::mods_dir().join(m).is_dir());
+    // A mod that managed policy denies counts as gone: the layout can't show it.
+    let policy = crate::policy::current();
+    used.retain(|m| !m.starts_with("frame-") && (!mods::mods_dir().join(m).is_dir() || !policy.mod_allowed(m, mods::is_shipped(m))));
     used
 }
 
@@ -890,6 +897,7 @@ impl AppWindow {
     /// Makes `name` the shown layout (its file, or its default if missing or
     /// broken), with the person's clicks on it.
     fn load_layout(&mut self, name: &str) {
+        let name = if layout_allowed(name) { name } else { "main" };
         self.layout_name = name.to_owned();
         self.written_layout.clear();
         let mut from_file = false;
@@ -947,7 +955,7 @@ impl AppWindow {
     fn switch_layout(&mut self, name: Option<&str>, window: &mut Window, cx: &mut Context<Self>) {
         let names = layout_names();
         let next = match name {
-            Some(n) if mods::valid_name(n) && layout_path(n).exists() => n.to_owned(),
+            Some(n) if mods::valid_name(n) && layout_path(n).exists() && layout_allowed(n) => n.to_owned(),
             Some(n) => {
                 tracing::warn!("no layout {n:?} in layouts/");
                 return;

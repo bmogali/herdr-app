@@ -408,6 +408,17 @@ Narrower than 160px, the sidebar mods draw a compact rail; folding resizes
 `sidebar` to 44 (76 on macOS, room for the traffic lights). On macOS,
 the tabs also leave room for the window buttons when the sidebar is narrower.
 
+### Managed policy
+
+An organization can restrict mods and layouts with a root-owned
+`managed-policy.json` in a system folder (`/Library/Application Support/Herdr/`
+on macOS, `/etc/herdr-app/` on Linux, `%ProgramData%\Herdr\` on Windows),
+written by an administrator. Not in this home, and not editable here. When a
+mod or layout you installed doesn't load or list, and the person works for an
+organization, it may be denied by that file: say so rather than "fixing" it.
+Rules per `mods` / `layouts`: `allow` (names or `prefix*`), `block`,
+`allowShipped`. Details in docs/security.md.
+
 ### Layouts and mods other people made
 
 People share layouts at herdr.dev/layouts and mods at herdr.dev/mods. Each

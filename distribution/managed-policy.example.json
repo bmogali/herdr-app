@@ -1,0 +1,11 @@
+{
+  "mods": {
+    "allow": ["acme-*"],
+    "block": [],
+    "allowShipped": true
+  },
+  "layouts": {
+    "allow": ["acme-*"],
+    "allowShipped": true
+  }
+}

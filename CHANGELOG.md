@@ -1,5 +1,10 @@
 # Herdr changelog
 
+## [Unreleased]
+
+### New
+- **Managed policy.** Administrators can allow or block mods and layouts across a fleet with a root-owned `managed-policy.json`. See the security doc.
+
 ## [0.1.11] - 2026-10-31
 
 ### Fixed

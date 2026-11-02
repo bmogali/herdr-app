@@ -15,6 +15,7 @@ mod model;
 mod mirror;
 mod mirror_sync;
 mod place;
+mod policy;
 mod persist;
 #[cfg(target_os = "macos")]
 mod macos;

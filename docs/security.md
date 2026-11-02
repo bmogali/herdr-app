@@ -9,6 +9,35 @@ Mods can also run programs on connected machines.
 There is no permission prompt for each program or network request. Read a mod before installing it, and treat it like a shell script you would run yourself.
 Layouts can load mods. Check those references too.
 
+## Managed policy for organizations
+
+An administrator can limit which mods and layouts load on a machine. Herdr
+reads one JSON file from a system location that standard users cannot write:
+
+| OS | File |
+|---|---|
+| macOS | `/Library/Application Support/Herdr/managed-policy.json` |
+| Linux | `/etc/herdr-app/managed-policy.json` |
+| Windows | `%ProgramData%\Herdr\managed-policy.json` |
+
+```json
+{
+  "mods":    { "allow": ["acme-*"], "block": ["risky"], "allowShipped": true },
+  "layouts": { "allow": ["acme-*"], "allowShipped": true }
+}
+```
+
+- With no file, nothing changes.
+- `block` always wins. Herdr's own mods and layouts pass while `allowShipped` is true (the default). Then `allow`, when present, lists everything else (`[]` allows none). Without `allow`, anything not blocked is allowed.
+- A name is exact, or a prefix ending in `*`.
+- Mods that are not allowed are not loaded and are hidden from layouts. Layouts that are not allowed are not listed, cannot be switched to, and fall back to `main`. A layout that needs a denied mod counts as unavailable. `main` and the app's own `frame-` mods cannot be blocked.
+- A file that is unreadable or invalid fails closed: only Herdr's own mods and layouts load. The reason is logged.
+- The file is re-read when it changes, so an update applies to a running app.
+
+The file can be put there by any means that writes it as an administrator. [`managed-policy.example.json`](../distribution/managed-policy.example.json) is an example.
+
+This stops what Herdr loads. It does not stop someone from running arbitrary programs, and anyone who can write the file can change the policy, so keep it root-owned. In debug builds `HERDR_MANAGED_POLICY` overrides the path for testing; release builds ignore it.
+
 ## What stays on disk
 
 The default app home is `~/.config/herdr-app`, including on macOS and Windows (under your user home).

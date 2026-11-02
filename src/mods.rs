@@ -203,6 +203,11 @@ pub fn copy_layout_state(home: &Path, name: &str, to: &str) -> std::io::Result<(
     }
 }
 
+/// Whether `name` is one of Herdr's own default mods.
+pub fn is_shipped(name: &str) -> bool {
+    DEFAULT_MODS.iter().any(|(p, _)| p.split('/').next() == Some(name))
+}
+
 pub fn valid_name(name: &str) -> bool {
     !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
 }
@@ -350,7 +355,16 @@ pub struct Found {
 
 /// Every mod folder that has a main.js.
 pub fn scan() -> Vec<Found> {
+    let policy = crate::policy::current();
     let mut found = scan_dir(&mods_dir(), "");
+    // Managed policy (policy.rs): a mod it does not allow is never loaded.
+    found.retain(|f| {
+        let ok = policy.mod_allowed(&f.id, is_shipped(&f.id));
+        if !ok {
+            tracing::debug!("mod {} is not allowed by managed policy", f.id);
+        }
+        ok
+    });
     found.extend(scan_dir(&frame_dir(), "frame-"));
     found.sort_by(|a, b| a.id.cmp(&b.id));
     found
